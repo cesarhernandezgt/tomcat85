@@ -1,0 +1,669 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!DOCTYPE document [
+  <!ENTITY project SYSTEM "project.xml">
+]>
+<?xml-stylesheet type="text/xsl" href="tomcat-docs.xsl"?>
+<document url="changelog.html">
+
+  &project;
+
+  <properties>
+    <title>Changelog</title>
+    <no-comments />
+  </properties>
+
+<body>
+<!--
+  Subsection ordering:
+  General, Catalina, Coyote, Jasper, Cluster, WebSocket, Web applications,
+  Extras, Tribes, jdbc-pool, Other
+
+  Item Ordering:
+
+  Fixes having an issue number are sorted by their number, ascending.
+
+  There is no ordering by add/update/fix/scode.
+
+  Other fixed issues are added to the end of the list, chronologically.
+  They eventually become mixed with the numbered issues. (I.e., numbered
+  issues do not "pop up" wrt. others).
+-->
+<section name="Tomcat 8.5.3" rtext="">
+  <subsection name="Catalina">
+    <changelog>
+      <fix>
+<<<<<<< HEAD
+        RMI Target related memory leaks are avoidable which makes them an
+        application bug that needs to be fixed rather than a JRE bug to work
+        around. Therefore, start logging RMI Target related memory leaks on web
+        application stop. Add an option that controls if the check for these
+        leaks is made. Log a warning if running on Java 9 with this check
+        enabled but without the command line option it requires. (markt)
+=======
+        <bug>61072</bug>: Respect the documentation statements that allow
+        using the platform default secure random for session id generation.
+        (remm)
+      </fix>
+      <fix>
+        Correct the javadoc for
+        <code>o.a.c.connector.CoyoteAdapter#parseSessionCookiesId</code>.
+        Patch provided by John Andrew (XUZHOUWANG) via Github. (violetagg)
+      </fix>
+      <fix>
+        <bug>61101</bug>: CORS filter should set Vary header in response.
+        Submitted by Rick Riemer. (remm)
+      </fix>
+    </changelog>
+  </subsection>
+  <subsection name="Coyote">
+    <changelog>
+      <fix>
+        <bug>61086</bug>: Explicitly signal am empty request body for HTTP 205
+        responses. (markt)
+      </fix>
+    </changelog>
+  </subsection>
+  <subsection name="Other">
+    <changelog>
+      <fix>
+        <bug>61055</bug>: Clarify the code comments in the rewrite valve to make
+        clear that there are no plans to provide proxy support for this valve
+        since Tomcat does not have proxy capbilities. (markt)
+      </fix>
+      <fix>
+        <bug>61076</bug>: Document the <code>altDDName</code> attribute for the
+        <code>Context</code> element. (markt)
+      </fix>
+    </changelog>
+  </subsection>
+</section>
+<section name="Tomcat 8.5.15 (markt)" rtext="2017-05-10">
+  <subsection name="General">
+    <changelog>
+      <add>
+        Allow to exclude JUnit test classes using the build property
+        <code>test.exclude</code> and document the property in
+        BUILDING.txt. (rjung)
+      </add>
+    </changelog>
+  </subsection>
+  <subsection name="Catalina">
+    <changelog>
+      <fix>
+        Review those places where Tomcat re-encodes a URI or URI component and
+        ensure that that correct encoding (path differs from query string) is
+        applied and that the encoding is applied consistently. (markt)
+      </fix>
+      <fix>
+        Avoid a <code>NullPointerException</code> when reading attributes for a
+        initialised HTTP connector where TLS is enabled. (markt)
+>>>>>>> 9044c1672... BZ61101: CORS filter should set Vary header in response. Submitted by Rick Riemer.
+      </fix>
+      <fix>
+        Ensure NPE will not be thrown during deployment when scanning jar files
+        without MANIFEST.MF file. (violetagg)
+      </fix>
+      <scode>
+        Remove the <code>clearReferencesStatic</code> option from
+        <code>StandardContext</code>. It was known to cause problems with some
+        libraries (such as log4j) and was only linked to suspected memory leaks
+        rather than known memory leaks. It had been disabled by default with no
+        increase in the reports of memory leaks for some time. (markt)
+      </scode>
+      <fix>
+        <bug>59604</bug>: Correct the assumption made in the URL decoding that
+        the default platform encoding is always compatible with ISO-8859-1. This
+        assumption is not always valid, e.g. on z/OS. (markt)
+      </fix>
+      <fix>
+        <bug>59608</bug>: Skip over any invalid <code>Class-Path</code> attribute
+        from JAR manifests. Log errors at debug level due to many bad libraries.
+        (remm)
+      </fix>
+      <fix>
+        Fix error message when failed to register MBean. (kfujino)
+      </fix>
+      <fix>
+        <bug>59655</bug>: Configure the cookie name validation to use RFC6265 rules by default to
+        align it with the default cookie parser. Document the impact system properties have on
+        cookie name validation. (mark)
+      </fix>
+    </changelog>
+  </subsection>
+  <subsection name="Coyote">
+    <changelog>
+      <fix>
+        Ensure that requests with HTTP method names that are not tokens (as
+        required by RFC 7231) are rejected with a 400 response. (markt)
+      </fix>
+      <fix>
+        When an asynchronous request is processed by the AJP connector, ensure
+        that request processing has fully completed before starting the next
+        request. (markt)
+      </fix>
+      <fix>
+        Improve handling of HTTP/2 stream resets. (markt)
+      </fix>
+      <add>
+        <bug>58750</bug>: The HTTP Server header is no longer set by default. A
+        Server header may be configured by setting the <code>server</code>
+        attribute on the <code>Connector</code>. A new <code>Connector</code>
+        attribute, <code>serverRemoveAppProvidedValues</code> may be used to
+        remove any Server header set by a web application. (markt)
+      </add>
+      <fix>
+        <bug>59564</bug>: Correct offset when reading into HTTP/2 input buffer
+        that could cause problems reading request bodies. (violetagg/markt)
+      </fix>
+      <fix>
+        Modify the handling of read/write timeouts so that the appropriate error
+        handling (<code>ReadListener.onError()</code>,
+        <code>WriteListener.onError()</code> or
+        <code>AsycnListener.onError()</code>) is called. (markt)
+      </fix>
+      <fix>
+       If an async dispatch results in the completion of request processing,
+       ensure that any remaining request body is swallowed before starting the
+       processing of the next request else the remaining body may be read as the
+       start of the next request leading to a 400 response. (markt)
+      </fix>
+      <fix>
+        Fix a cause of multiple attempts to close the same socket. (markt)
+      </fix>
+      <fix>
+        Avoid unnecessary processing of async timeouts. (markt)
+      </fix>
+    </changelog>
+  </subsection>
+  <subsection name="Jasper">
+    <changelog>
+      <fix>
+        <bug>59567</bug>: Fix NPE scanning webapps for TLDs when an exploded
+        JAR has an empty WEB-INF/classes/META-INF folder. (remm)
+      </fix>
+      <fix>
+        Fix a memory leak in the expression language implementation that caused
+        the class loader of the first web application to use expressions to be
+        pinned in memory. (markt)
+      </fix>
+      <fix>
+        <bug>59654</bug>: Improve error message when attempting to use a TLD
+        file from an invalid location. Patch provided by Huxing Zhang. (markt)
+      </fix>
+    </changelog>
+  </subsection>
+  <subsection name="WebSocket">
+    <changelog>
+      <fix>
+        <bug>59659</bug>: Fix possible memory leak in WebSocket handling of
+        unexpected client disconnects. (markt)
+      </fix>
+    </changelog>
+  </subsection>
+  <subsection name="Web applications">
+    <changelog>
+      <fix>
+        <bug>58891</bug>: Update the SSL how-to. Based on a suggestion by
+        Alexander Kjäll. (markt)
+      </fix>
+    </changelog>
+  </subsection>
+  <subsection name="jdbc-pool">
+    <changelog>
+      <fix>
+        Fix a memory leak with the pool cleaner thread that retained a reference
+        to the web application class loader for the first web application to use
+        a connection pool. (markt)
+      </fix>
+    </changelog>
+  </subsection>
+  <subsection name="Other">
+    <changelog>
+      <update>
+        Update the internal fork of Commons DBCP 2 to r1743696 (2.1.1 plus
+        additional fixes). (markt)
+      </update>
+      <update>
+        Update the internal fork of Commons Pool 2 to r1743697 (2.4.2 plus
+        additional fixes). (markt)
+      </update>
+      <update>
+        Update the internal fork of Commons File Upload to r1743698 (1.3.1 plus
+        additional fixes). (markt)
+      </update>
+      <fix>
+        <bug>58626</bug>: Add support for a new environment variable
+        (<code>USE_NOHUP</code>) that causes <code>nohup</code> to be used when
+        starting Tomcat. It is disabled by default except on HP-UX where it is
+        enabled by default since it is required when starting Tomcat at boot on
+        HP-UX. (markt)
+      </fix>
+    </changelog>
+  </subsection>
+</section>
+<section name="Tomcat 8.5.2" rtext="2016-05-16">
+  <subsection name="Catalina">
+    <changelog>
+      <fix>
+        Ensure that annotated web components packed in web fragments will be
+        processed when <code>unpackWARs</code> is enabled. (violetagg)
+      </fix>
+    </changelog>
+  </subsection>
+</section>
+<section name="Tomcat 8.5.1" rtext="not released">
+  <subsection name="Catalina">
+    <changelog>
+      <fix>
+        <bug>59206</bug>: Ensure NPE will not be thrown by
+        <code>o.a.tomcat.util.file.ConfigFileLoader</code> when
+        <code>catalina.base</code> is not specified. (violetagg)
+      </fix>
+      <fix>
+        <bug>59217</bug>: Remove duplication in the recycling of the path in
+        <code>o.a.tomcat.util.http.ServerCookie</code>. Patch is provided by
+        Kyohei Nakamura. (violetagg)
+      </fix>
+      <fix>
+        Fixed possible NPE in
+        <code>o.a.catalina.loader.WebappClassLoaderBase.getResourceAsStream</code>
+        (violetagg)
+      </fix>
+      <fix>
+        <bug>59213</bug>: Async dispatches should be based off a wrapped request.
+        (remm)
+      </fix>
+      <fix>
+        Ensure that <code>javax.servlet.ServletRequest</code> and
+        <code>javax.servlet.ServletResponse</code> provided during
+        <code>javax.servlet.AsyncListener</code> registration are made
+        available via <code>javax.servlet.AsyncEvent.getSuppliedRequest</code>
+        and <code>javax.servlet.AsyncEvent.getSuppliedResponse</code>
+        (violetagg)
+      </fix>
+      <fix>
+        <bug>59219</bug>: Ensure <code>AsyncListener.onError()</code> is called
+        if an <code>Exception</code> is thrown during async processing. (markt)
+      </fix>
+      <fix>
+        <bug>59220</bug>: Ensure that <code>AsyncListener.onComplete()</code> is
+        called if the async request times out and the response is already
+        committed. (markt)
+      </fix>
+      <fix>
+        <bug>59226</bug>: Process the <code>Class-Path</code> attribute from
+        JAR manifests for JARs on the class path excluding JARs packaged in
+        <code>WEB-INF/lib</code>. (markt)
+      </fix>
+      <fix>
+        <bug>59255</bug>: Fix possible NPE in mapper. (kkolinko/remm)
+      </fix>
+      <fix>
+        <bug>59256</bug>: <code>slf4j-taglib*.jar</code> should not be excluded
+        from the standard JAR scanning by default. (violetagg)
+      </fix>
+      <fix>
+        Clarify in the log message that specifying both urlPatterns and value
+        attributes in WebServlet and WebFilter annotations is not allowed.
+        (violetagg)
+      </fix>
+      <fix>
+        Ensure the exceptions caused by Valves will be available in the log
+        files so that they can be evaluated when
+        <code>o.a.catalina.valves.ErrorReportValve.showReport</code> is
+        disabled. Patch is provided by Svetlin Zarev. (violetagg)
+      </fix>
+      <fix>
+        Remove unused <code>distributable</code> attribute that is defined as
+        <code>TransientAttribute</code> of <code>Manager</code> in StoreConfig.
+        (kfujino)
+      </fix>
+      <fix>
+        Fix handling of Cluster Receiver in StoreConfig. The <code>bind</code>
+        and <code>host</code> attributes define as
+        <code>TransientAttribute</code>. (kfujino)
+      </fix>
+      <fix>
+        <bug>59261</bug>: <code>ServletRequest.getAsyncContext()</code> now
+        throws an <code>IllegalStateException</code> as required by the Servlet
+        specification if the request is not in asynchronous mode when called.
+        (markt)
+      </fix>
+      <fix>
+        <bug>59269</bug>: Correct the implementation of
+        <code>PersistentManagerBase</code> so that <code>minIdleSwap</code>
+        functions as designed and sessions are swapped out to keep the active
+        session count below <code>maxActiveSessions</code>. (markt)
+      </fix>
+      <add>
+        Add the <code>org.apache.catalina.servlet4preview</code> package that
+        can be used to gain early access to Servlet 4.0 features. Note that this
+        package will <strong>not</strong> be present in Tomcat 9. (markt)
+      </add>
+      <fix>
+        Correctly configure the base path for a resources directory provided by
+        an expanded JAR file. Patch provided by hengyunabc. (markt)
+      </fix>
+      <add>
+        When multiple compressed formats are available and the client does not
+        express a preference, use the server order to determine the preferred
+        format. Based on a patch by gmokki. (markt)
+      </add>
+      <fix>
+        <bug>59284</bug>: Allow the Tomcat provided JASPIC
+        <code>SimpleServerAuthConfig</code> to pick up module configuration
+        properties from either the property set passed to its constructor or
+        from the properties passed in the call to <code>getAuthContext</code>.
+        Based on a patch by Thomas Maslen. (markt)
+      </fix>
+      <fix>
+        <bug>59310</bug>: Do not add a <code>Content-Length: 0</code> header for
+        custom responses to <code>HEAD</code> requests that do not set a
+        <code>Content-Length</code> value. (markt)
+      </fix>
+      <fix>
+        When normalizing paths, improve the handling when paths end with
+        <code>/.</code> or <code>/..</code> and ensure that input and output are
+        consistent with respect to whether or not they end with <code>/</code>.
+        (markt)
+      </fix>
+      <fix>
+        <bug>59317</bug>: Ensure that
+        <code>HttpServletRequest.getRequestURI()</code> returns an encoded URI
+        rather than a decoded URI after a dispatch. (markt)
+      </fix>
+      <fix>
+        Use the correct URL for the fragment when reporting errors processing
+        a <code>web-fragment.xml</code> file from a JAR located in an unpacked
+        WAR. (markt)
+      </fix>
+      <fix>
+        Ensure that <code>JarScanner</code> only uses the explicit call-back to
+        process <code>WEB-INF/classes</code> and only when configured to treat
+        the contents of <code>WEB-INF/classes</code> as a possible exploded JAR.
+        (markt)
+      </fix>
+      <scode>
+        Remove the <code>java2DDisposerProtection</code> option from the
+        <code>JreMemoryLeakPreventionListener</code>. The leak is fixed in Java
+        7 onwards and Tomcat 8 requires Java 7 so the option is unnecessary.
+        (markt)
+      </scode>
+      <fix>
+        Ensure that the value for the header <code>X-Frame-Options</code> is
+        constructed correctly according to the specification when
+        <code>ALLOW-FROM</code> option is used. (violetagg)
+      </fix>
+      <fix>
+        Fix an <code>IllegalArgumentException</code> if the first use of an
+        internal <code>Response</code> object requires JASPIC authentication.
+        (markt)
+      </fix>
+      <fix>
+        Do not trigger unnecessary session ID changes when using JASPIC and the
+        user is authenticated using cached credentials. (markt)
+      </fix>
+      <fix>
+        <bug>59437</bug>: Ensure that the JASPIC <code>CallbackHandler</code> is
+        thread-safe. (markt)
+      </fix>
+      <fix>
+        <bug>59449</bug>: In <code>ContainerBase</code>, ensure that the process
+        to remove a child container is the reverse of the process to add one.
+        Patch provided by Huxing Zhang. (markt)
+      </fix>
+    </changelog>
+  </subsection>
+  <subsection name="Coyote">
+    <changelog>
+      <fix>
+        Align cipher configuration parsing with current OpenSSL master. (markt)
+      </fix>
+      <update>
+        Change the default for <code>honorCipherOrder</code> to
+        <code>false</code>. With the current default TLS configuration, it is no
+        longer necessary for this to be <code>true</code> for a reasonably
+        secure configuration. (markt)
+      </update>
+      <add>
+        Add a new environment variable <code>JSSE_OPTS</code> that is intended
+        to be used to pass JVM wide configuration to the JSSE implementation.
+        The default value is <code>-Djdk.tls.ephemeralDHKeySize=2048</code>
+        which protects against weak Diffie-Hellman keys. (markt)
+      </add>
+      <fix>
+        When running on Java 7, exclude DHE ciphers from the default cipher list
+        for JSSE connectors since they use weak 768 bit DH keys and cannot be
+        configured to use more secure keys. (markt)
+      </fix>
+      <fix>
+        <bug>58970</bug>: Fix a connection counting bug in the NIO connector
+        that meant some dropped connections were not removed from the current
+        connection count. (markt)
+      </fix>
+      <fix>
+        <bug>59289</bug>: Do not recycle upgrade processors in unexpected close
+        situations. (remm)
+      </fix>
+      <fix>
+        <bug>59295</bug>: Use <code>Locale.toLanguageTag()</code> to construct
+        the <code>Content-Language</code> HTTP header to ensure the locale is
+        correctly represented. Patch provided by zikfat. (markt)
+      </fix>
+      <update>
+        <bug>59295</bug>: Add support for using pem encoded certificates with
+        JSSE SSL. Submitted by Emmanuel Bourg with additional tweaks. (remm)
+      </update>
+      <fix>
+        Make the TLS certificate chain available to clients when using
+        JSSE+OpenSSL with the certificate chain stored in a Java KeyStore.
+        (markt)
+      </fix>
+      <fix>
+        Work around <a herf="https://github.com/openssl/openssl/issues/188">a
+        known issue in OpenSSL</a> that does not permit the TLS handshake to be
+        failed if the ALPN negotiation fails. (markt)
+      </fix>
+      <update>
+        <bug>59421</bug>: Add direct HTTP/2 connection support. (remm)
+      </update>
+      <fix>
+        Correctly handle a call to <code>AsyncContext.complete()</code> from a
+        non-container thread when non-blocking I/O is being used. (markt)
+      </fix>
+      <fix>
+        <bug>59451</bug>: Correct Javadoc for <code>MessageBytes</code>. Patch
+        provided by Kyohei Nakamura. (markt)
+      </fix>
+      <fix>
+        <bug>59450</bug>: Correctly handle the case where the
+        <code>LegacyCookieProcessor</code> is configured with
+        <code>allowHttpSepsInV0</code> set to <code>false</code> and
+        <code>forwardSlashIsSeparator</code> set to <code>true</code>. Patch
+        provided by Kyohei Nakamura. (markt)
+      </fix>
+    </changelog>
+  </subsection>
+  <subsection name="Jasper">
+    <changelog>
+      <fix>
+        When scanning JARs for TLDs, correctly handle the (rare) case where a
+        JAR has been exploded into <code>WEB-INF/classes</code> and the web
+        application is deployed as a packed WAR. (markt)
+      </fix>
+      <fix>
+        <bug>59640</bug>: NPEs with not found TLDs. (remm)
+      </fix>
+    </changelog>
+  </subsection>
+  <subsection name="WebSocket">
+    <changelog>
+      <fix>
+        <bug>59189</bug>: Explicitly release the native memory held by the
+        <code>Inflater</code> and <code>Deflater</code> when using
+        PerMessageDeflate and the WebSocket session ends. Based on a patch by
+        Henrik Olsson. (markt)
+      </fix>
+      <fix>
+        Return back a container specific extension to the WsServerContainer
+        to allow frameworks to more easily dispatch requests to WebSocket
+        endpoints. (violetagg)
+      </fix>
+      <fix>
+        Fix a regression caused by the connector refactoring and ensure that the
+        thread context class loader is set to the to the web application
+        classloader when processing WebSocket messages on the server. (markt)
+      </fix>
+      <fix>
+        Ensure that a client disconnection triggers the error handling for the
+        associated WebSocket end point. (markt)
+      </fix>
+      <add>
+        Make WebSocket client more robust when handling errors during the close
+        of a WebSocket session. (markt)
+      </add>
+    </changelog>
+  </subsection>
+  <subsection name="Web applications">
+    <changelog>
+      <fix>
+        <bug>59210</bug>: Server push example has to use
+        <code>o.a.catalina.connector.RequestFacade</code> when obtaining
+        <code>o.a.catalina.core.ApplicationPushBuilder</code>. Patch is
+        provided by Huxing Zhang. (violetagg)
+      </fix>
+      <fix>
+        <bug>59218</bug>: Correct the path to <code>jaspic-providers.xml</code>
+        in Jaspic How-To. Patch is provided by Tatsuya Bessho. (violetagg)
+      </fix>
+      <fix>
+        Remove button that has accidentally been added to the host manager.
+        Submitted by Coty Sutherland. (remm)
+      </fix>
+      <fix>
+        Update in the documentation the link to the maven repository where
+        Tomcat snapshot artifacts are deployed. (markt/violetagg)
+      </fix>
+      <fix>
+        Clarify in the documentation that calls to
+        <code>ServletContext.log(String, Throwable)</code> or
+        <code>GenericServlet.log(String, Throwable)</code> are logged at the
+        SEVERE level. (violetagg)
+      </fix>
+      <fix>
+        Correct a typo in SSL/TLS Configuration How-To.
+        Issue reported via comments.apache.org. (violetagg)
+      </fix>
+    </changelog>
+  </subsection>
+  <subsection name="Tribes">
+    <changelog>
+      <fix>
+        Avoid NPE when a proxy node failed to retrieve a backup entry. (kfujino)
+      </fix>
+      <add>
+        Add log of when received an unexpected messages. (kfujino)
+      </add>
+      <add>
+        Add the flag indicating that member is a localMember. (kfujino)
+      </add>
+      <fix>
+        Fix potential NPE that depends on the setting order of attributes of
+        static member when using the static cluster. (kfujino)
+      </fix>
+      <add>
+        Add get/set method for the channel that is related to
+        <code>ChannelInterceptor</code>. (kfujino)
+      </add>
+      <fix>
+        As with the multicast cluster environment, in the static cluster
+        environment, the local member inherits properties from the cluster
+        receiver. (kfujino)
+      </fix>
+      <add>
+        Add get/set method for the channel that is related to each Channel
+        services. (kfujino)
+      </add>
+      <add>
+        Add name to channel in order to identify channels. In tomcat cluster
+        environment, it is set the cluster name + "-Channel" as default value.
+        (kfujino)
+      </add>
+      <add>
+        Add the channel name to the thread which is invoked by channel services
+        in order to identify the associated channel. (kfujino)
+      </add>
+      <fix>
+        Ensure that clear the channel instance from channel services when
+        stopping channel. (kfujino)
+      </fix>
+      <add>
+        Implement map state in the replication map. (kfujino)
+      </add>
+      <fix>
+        Ensure that the ping is not executed during the start/stop of the
+        replication map. (kfujino)
+      </fix>
+      <fix>
+        In ping processing in the replication map, send not the
+        <code>INIT</code> message but the newly introduced <code>PING</code>
+        message. (kfujino)
+      </fix>
+    </changelog>
+  </subsection>
+  <subsection name="Other">
+    <changelog>
+      <fix>
+        <bug>59209</bug>: Remove <code>honorCipherOrder=false</code> attribute
+        from the connector example in server.xml. When the block is uncommented
+        the connector will use the default value for this attribute which is
+        <code>false</code>. If one needs to enable it, one can add it
+        explicitly to the connector definition. Use of this feature requires
+        Java 8 or later. Patch is provided by Huxing Zhang. (violetagg)
+      </fix>
+      <fix>
+        <bug>59211</bug>: Add hamcrest to Eclipse classpath. Patch is provided
+        by Huxing Zhang. (violetagg)
+      </fix>
+      <update>
+        <bug>59280</bug>: Update the NSIS Installer used to build the
+        Windows Installers to version 2.51. (kkolinko)
+      </update>
+      <update>
+        Update the packaged version of the Tomcat Native Library to 1.2.7 to
+        pick up the Windows binaries that are based on OpenSSL 1.0.2h and APR
+        1.5.2. (markt)
+      </update>
+    </changelog>
+  </subsection>
+</section>
+<section name="Tomcat 8.5.0" rtext="2016-03-24">
+  <subsection name="Other">
+    <changelog>
+      <add>
+        The Tomcat 8.5.x branch was created from the Tomcat 9.0.0.M4 tag.
+        Changes were applied to restore Java 7 compatibility and to align the
+        specification APIs with Servlet 3.1, JSP 2.3, EL 3.0, WebSocket 1.1 and
+        JASPIC 1.1.
+      </add>
+    </changelog>
+  </subsection>
+</section>
+</body>
+</document>

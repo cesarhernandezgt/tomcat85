@@ -282,12 +282,8 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
     private void doTimeoutAsync() {
         // Avoid multiple timeouts
         setAsyncTimeout(-1);
-<<<<<<< HEAD
-        socketWrapper.processSocket(SocketEvent.TIMEOUT, true);
-=======
         asyncTimeoutGeneration = asyncStateMachine.getCurrentGeneration();
         processSocketEvent(SocketEvent.TIMEOUT, true);
->>>>>>> 71a8b0935... Avoid unnecessary processing of async timeouts.
     }
 
 

@@ -66,12 +66,8 @@ import org.apache.catalina.WebResourceRoot;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.mapper.MappingData;
-<<<<<<< HEAD
 import org.apache.catalina.servlet4preview.http.Mapping;
-=======
-import org.apache.catalina.servlet4preview.http.ServletMapping;
 import org.apache.catalina.util.Introspection;
->>>>>>> 234980182... Process all ServletSecurity annotations at web application start rather
 import org.apache.catalina.util.ServerInfo;
 import org.apache.catalina.util.URLEncoder;
 import org.apache.tomcat.util.ExceptionUtils;
@@ -886,9 +882,6 @@ public class ApplicationContext implements ServletContext {
             }
         }
 
-<<<<<<< HEAD
-        return context.dynamicServletAdded(wrapper);
-=======
         if (initParams != null) {
             for (Map.Entry<String, String> initParam: initParams.entrySet()) {
                 wrapper.addInitParameter(initParam.getKey(), initParam.getValue());
@@ -901,7 +894,6 @@ public class ApplicationContext implements ServletContext {
             registration.setServletSecurity(new ServletSecurityElement(annotation));
         }
         return registration;
->>>>>>> 234980182... Process all ServletSecurity annotations at web application start rather
     }
 
 
