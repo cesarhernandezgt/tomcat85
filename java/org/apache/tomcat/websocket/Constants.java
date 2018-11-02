@@ -85,7 +85,7 @@ public class Constants {
     public static final String WS_KEY_HEADER_NAME = "Sec-WebSocket-Key";
     public static final String WS_PROTOCOL_HEADER_NAME = "Sec-WebSocket-Protocol";
     public static final String WS_EXTENSIONS_HEADER_NAME = "Sec-WebSocket-Extensions";
-
+    public static final String LOCATION_HEADER_NAME = "Location";
     // Configuration for Origin header in client
     static final String DEFAULT_ORIGIN_HEADER_VALUE =
             System.getProperty("org.apache.tomcat.websocket.DEFAULT_ORIGIN_HEADER_VALUE");
