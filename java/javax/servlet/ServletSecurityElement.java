@@ -34,7 +34,7 @@ import javax.servlet.annotation.ServletSecurity;
 public class ServletSecurityElement extends HttpConstraintElement {
 
     private final Map<String,HttpMethodConstraintElement> methodConstraints =
-        new HashMap<>();
+            new HashMap<>();
 
     /**
      * Use default HttpConstraint.
@@ -73,7 +73,7 @@ public class ServletSecurityElement extends HttpConstraintElement {
      * @throws IllegalArgumentException if a method name is specified more than
      */
     public ServletSecurityElement(HttpConstraintElement httpConstraintElement,
-            Collection<HttpMethodConstraintElement> httpMethodConstraints) {
+                                  Collection<HttpMethodConstraintElement> httpMethodConstraints) {
         super(httpConstraintElement.getEmptyRoleSemantic(),
                 httpConstraintElement.getTransportGuarantee(),
                 httpConstraintElement.getRolesAllowed());
@@ -95,11 +95,11 @@ public class ServletSecurityElement extends HttpConstraintElement {
         if (constraints != null) {
             for (int i = 0; i < constraints.length; i++) {
                 HttpMethodConstraintElement e =
-                    new HttpMethodConstraintElement(constraints[i].value(),
-                            new HttpConstraintElement(
-                                    constraints[i].emptyRoleSemantic(),
-                                    constraints[i].transportGuarantee(),
-                                    constraints[i].rolesAllowed()));
+                        new HttpMethodConstraintElement(constraints[i].value(),
+                                new HttpConstraintElement(
+                                        constraints[i].emptyRoleSemantic(),
+                                        constraints[i].transportGuarantee(),
+                                        constraints[i].rolesAllowed()));
                 l.add(e);
             }
         }
