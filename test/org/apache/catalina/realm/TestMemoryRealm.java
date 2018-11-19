@@ -34,4 +34,11 @@ public class TestMemoryRealm {
 
         Assert.assertNull(p);
     }
+
+    @Test
+    public void testCVE20160762() {
+        MemoryRealm memoryRealm = new MemoryRealm();
+        Principal p = memoryRealm.authenticate("bar", "bar");
+        Assert.assertNull(p);
+    }
 }
