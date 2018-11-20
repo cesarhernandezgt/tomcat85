@@ -73,13 +73,15 @@ public class TestRewriteValve extends TomcatBaseTest {
     @Test
     public void testRewriteEnvVarAndServerVar() throws Exception {
         System.setProperty("some_variable", "something");
-        doTestRewrite("RewriteRule /b/(.*).html$ /c/%{ENV:some_variable}%{SERVLET_PATH}", "/b/x.html", "/c/something/b/x.html");
+        doTestRewrite("RewriteRule /b/(.*).html$ /c/%{ENV:some_variable}%{SERVLET_PATH}",
+                "/b/x.html", "/c/something/b/x.html");
     }
 
     @Test
     public void testRewriteServerVarAndEnvVar() throws Exception {
         System.setProperty("some_variable", "something");
-        doTestRewrite("RewriteRule /b/(.*).html$ /c%{SERVLET_PATH}/%{ENV:some_variable}", "/b/x.html", "/c/b/x.html/something");
+        doTestRewrite("RewriteRule /b/(.*).html$ /c%{SERVLET_PATH}/%{ENV:some_variable}",
+                "/b/x.html", "/c/b/x.html/something");
     }
 
     @Test
@@ -88,7 +90,7 @@ public class TestRewriteValve extends TomcatBaseTest {
             doTestRewrite("RewriteRule /b/(.*).html$ /c%_{SERVLET_PATH}", "/b/x.html", "/c");
             Assert.fail("IAE expected.");
         } catch (java.lang.IllegalArgumentException e) {
-            // excpected as %_{ is invalid
+            // expected as %_{ is invalid
         }
     }
 
@@ -98,11 +100,177 @@ public class TestRewriteValve extends TomcatBaseTest {
             doTestRewrite("RewriteRule /b/(.*).html$ /c$_{SERVLET_PATH}", "/b/x.html", "/c");
             Assert.fail("IAE expected.");
         } catch (java.lang.IllegalArgumentException e) {
-            // excpected as $_{ is invalid
+            // expected as $_{ is invalid
         }
     }
 
+    // https://bz.apache.org/bugzilla/show_bug.cgi?id=60013
+    public void testRewriteWithEncoding02() throws Exception {
+        doTestRewrite("RewriteRule ^/b/(.*)$ /c/?param=$1 [L]",
+                "/b/%E5%9C%A8%E7%BA%BF%E6%B5%8B%E8%AF%95", "/c/", "param=\u5728\u7EBF\u6D4B\u8BD5");
+    }
+
+    @Test
+    public void testNonAsciiPath() throws Exception {
+        doTestRewrite("RewriteRule ^/b/(.*) /c/$1", "/b/%E5%9C%A8%E7%BA%BF%E6%B5%8B%E8%AF%95",
+                "/c/%E5%9C%A8%E7%BA%BF%E6%B5%8B%E8%AF%95");
+    }
+
+    @Test
+    public void testQueryString() throws Exception {
+        doTestRewrite("RewriteRule ^/b/(.*) /c?$1", "/b/id=1", "/c", "id=1");
+    }
+
+    @Test
+    public void testNonAsciiQueryString() throws Exception {
+        doTestRewrite("RewriteRule ^/b/(.*) /c?$1",
+                "/b/id=%E5%9C%A8%E7%BA%BF%E6%B5%8B%E8%AF%95",
+                "/c", "id=%E5%9C%A8%E7%BA%BF%E6%B5%8B%E8%AF%95");
+    }
+
+
+    @Test
+    public void testNonAsciiQueryStringAndPath() throws Exception {
+        doTestRewrite("RewriteRule ^/b/(.*)/(.*) /c/$1?$2",
+                "/b/%E5%9C%A8%E7%BA%BF/id=%E6%B5%8B%E8%AF%95",
+                "/c/%E5%9C%A8%E7%BA%BF", "id=%E6%B5%8B%E8%AF%95");
+    }
+
+
+    @Test
+    public void testNonAsciiQueryStringAndRedirect() throws Exception {
+        doTestRewrite("RewriteRule ^/b/(.*) /c?$1 [R]",
+                "/b/id=%E5%9C%A8%E7%BA%BF%E6%B5%8B%E8%AF%95",
+                "/c", "id=%E5%9C%A8%E7%BA%BF%E6%B5%8B%E8%AF%95");
+    }
+
+
+    @Test
+    public void testUtf8WithBothQsFlagsNone() throws Exception {
+        // Note %C2%A1 == \u00A1
+        doTestRewrite("RewriteRule ^/b/(.*)/(.*) /c/\u00A1$1?$2",
+                "/b/%C2%A1/id=%C2%A1?di=%C2%AE", "/c/%C2%A1%C2%A1", "id=%C2%A1");
+    }
+
+    @Test
+    public void testUtf8WithBothQsFlagsRNE() throws Exception {
+        // Note %C2%A1 == \u00A1
+        // Failing to escape the redirect means UTF-8 bytes in the Location
+        // header which will be treated as if they are ISO-8859-1
+        doTestRewrite("RewriteRule ^/b/(.*)/(.*) /c/\u00A1$1?$2 [R,NE]",
+                "/b/%C2%A1/id=%C2%A1?di=%C2%AE", null);
+    }
+
+
+    @Test
+    public void testUtf8WithBothQsFlagsRNEQSA() throws Exception {
+        // Note %C2%A1 == \u00A1
+        // Failing to escape the redirect means UTF-8 bytes in the Location
+        // header which will be treated as if they are ISO-8859-1
+        doTestRewrite("RewriteRule ^/b/(.*)/(.*) /c/\u00A1$1?$2 [R,NE,QSA]",
+                "/b/%C2%A1/id=%C2%A1?di=%C2%AE", null);
+    }
+
+
+    @Test
+    public void testUtf8WithOriginalQsFlagsNone() throws Exception {
+        // Note %C2%A1 == \u00A1
+        doTestRewrite("RewriteRule ^/b/(.*) /c/\u00A1$1",
+                "/b/%C2%A1?id=%C2%A1", "/c/%C2%A1%C2%A1", "id=%C2%A1");
+    }
+
+
+    @Test
+    public void testUtf8WithOriginalQsFlagsRNE() throws Exception {
+        // Note %C2%A1 == \u00A1
+        // Failing to escape the redirect means UTF-8 bytes in the Location
+        // header which will be treated as if they are ISO-8859-1
+        doTestRewrite("RewriteRule ^/b/(.*) /c/\u00A1$1 [R,NE]",
+                "/b/%C2%A1?id=%C2%A1", null);
+    }
+
+
+    @Test
+    public void testUtf8WithRewriteQsFlagsNone() throws Exception {
+        // Note %C2%A1 == \u00A1
+        doTestRewrite("RewriteRule ^/b/(.*)/(.*) /c/\u00A1$1?$2",
+                "/b/%C2%A1/id=%C2%A1", "/c/%C2%A1%C2%A1", "id=%C2%A1");
+    }
+
+
+    public void testUtf8WithRewriteQsFlagsR() throws Exception {
+        // Note %C2%A1 == \u00A1
+        doTestRewrite("RewriteRule ^/b/(.*)/(.*) /c/\u00A1$1?$2 [R]",
+                "/b/%C2%A1/id=%C2%A1", "/c/%C2%A1%C2%A1", "id=%C2%A1");
+    }
+
+
+    @Test
+    public void testUtf8WithBothQsFlagsQSA() throws Exception {
+        // Note %C2%A1 == \u00A1
+        doTestRewrite("RewriteRule ^/b/(.*)/(.*) /c/\u00A1$1?$2 [QSA]",
+                "/b/%C2%A1/id=%C2%A1?di=%C2%AE", "/c/%C2%A1%C2%A1",
+                "id=%C2%A1&di=%C2%AE");
+    }
+
+
+    @Test
+    public void testUtf8WithRewriteQsFlagsRNE() throws Exception {
+        // Note %C2%A1 == \u00A1
+        // Failing to escape the redirect means UTF-8 bytes in the Location
+        // header which will be treated as if they are ISO-8859-1
+        doTestRewrite("RewriteRule ^/b/(.*)/(.*) /c/\u00A1$1?$2 [R,NE]",
+                "/b/%C2%A1/id=%C2%A1", null);
+    }
+
+
+    @Test
+    public void testUtf8WithRewriteQsFlagsQSA() throws Exception {
+        // Note %C2%A1 == \u00A1
+        doTestRewrite("RewriteRule ^/b/(.*)/(.*) /c/\u00A1$1?$2 [QSA]",
+                "/b/%C2%A1/id=%C2%A1", "/c/%C2%A1%C2%A1",
+                "id=%C2%A1");
+    }
+
+
+    @Test
+    public void testUtf8FlagsNone() throws Exception {
+        // Note %C2%A1 == \u00A1
+        doTestRewrite("RewriteRule ^/b/(.*) /c/\u00A1$1", "/b/%C2%A1", "/c/%C2%A1%C2%A1");
+    }
+
+
+    @Test
+    public void testUtf8FlagsRNE() throws Exception {
+        // Note %C2%A1 == \u00A1
+        // Failing to escape the redirect means UTF-8 bytes in the Location
+        // header which will be treated as if they are ISO-8859-1
+        doTestRewrite("RewriteRule ^/b/(.*) /c/\u00A1$1 [R,NE]", "/b/%C2%A1", null);
+    }
+
+
+    @Test
+    public void testFlagsNC() throws Exception {
+        // https://bz.apache.org/bugzilla/show_bug.cgi?id=60116
+        doTestRewrite("RewriteCond %{QUERY_STRING} a=([a-z]*) [NC]\n"
+                + "RewriteRule .* - [E=X-Test:%1]",
+                    "/c?a=aAa", "/c", null, "aAa");
+    }
+
+
     private void doTestRewrite(String config, String request, String expectedURI) throws Exception {
+        doTestRewrite(config, request, expectedURI, null);
+    }
+
+
+    private void doTestRewrite(String config, String request, String expectedURI,
+            String expectedQueryString) throws Exception {
+        doTestRewrite(config, request, expectedURI, expectedQueryString, null);
+    }
+
+
+    private void doTestRewrite(String config, String request, String expectedURI,
+            String expectedQueryString, String expectedAttributeValue) throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
         // No file system docBase required
@@ -123,11 +291,18 @@ public class TestRewriteValve extends TomcatBaseTest {
 
         tomcat.start();
 
-        ByteChunk res = getUrl("http://localhost:" + getPort() + request);
+        ByteChunk res = new ByteChunk();
+        int rc = getUrl("http://localhost:" + getPort() + request, res, null);
 
-        String body = res.toString();
-        RequestDescriptor requestDesc = SnoopResult.parse(body);
-        String requestURI = requestDesc.getRequestInfo("REQUEST-URI");
-        Assert.assertEquals(expectedURI, requestURI);
+        if (expectedURI == null) {
+            // Rewrite is expected to fail. Probably because invalid characters
+            // were written into the request target
+            Assert.assertEquals(400, rc);
+        } else {
+            String body = res.toString();
+            RequestDescriptor requestDesc = SnoopResult.parse(body);
+            String requestURI = requestDesc.getRequestInfo("REQUEST-URI");
+            Assert.assertEquals(expectedURI, requestURI);
+        }
     }
 }
