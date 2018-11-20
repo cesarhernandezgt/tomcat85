@@ -61,7 +61,9 @@ import org.apache.tomcat.util.net.AbstractEndpoint.Handler.SocketState;
 import org.apache.tomcat.util.net.DispatchType;
 import org.apache.tomcat.util.net.SSLSupport;
 import org.apache.tomcat.util.net.SendfileDataBase;
+import org.apache.tomcat.util.net.SendfileKeepAliveState;
 import org.apache.tomcat.util.net.SendfileState;
+import org.apache.tomcat.util.net.SocketEvent;
 import org.apache.tomcat.util.net.SocketWrapperBase;
 import org.apache.tomcat.util.res.StringManager;
 
@@ -1812,7 +1814,7 @@ public class Http11Processor extends AbstractProcessor {
         // Do sendfile as needed: add socket to sendfile and end
         if (sendfileData != null && !getErrorState().isError()) {
             if (keepAlive) {
-                if (available(false) == 0) {
+                if (inputBuffer.available(false) == 0) {
                     sendfileData.keepAliveState = SendfileKeepAliveState.OPEN;
                 } else {
                     sendfileData.keepAliveState = SendfileKeepAliveState.PIPELINED;
