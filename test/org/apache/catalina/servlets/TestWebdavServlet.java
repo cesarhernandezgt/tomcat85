@@ -20,15 +20,24 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.servlet.DispatcherType;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import static org.junit.Assert.assertEquals;
 
+import org.junit.Assert;
 import org.junit.Test;
-
+import org.apache.catalina.WebResource;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
+import org.apache.catalina.webresources.EmptyResource;
+import org.apache.catalina.webresources.TesterWebResourceRoot;
+import org.apache.tomcat.unittest.TesterRequest;
+import org.apache.tomcat.unittest.TesterResponse;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.websocket.server.WsContextListener;
 
@@ -149,5 +158,78 @@ public class TestWebdavServlet extends TomcatBaseTest {
         out.recycle();
         return TomcatBaseTest.getUrl(path, out, resHead);
     }
+    
+    @Test
+    public void testCustomErrorServedThroughGet() throws Exception {
+    	
+    	final AtomicInteger gets = new AtomicInteger(0);
+    	final AtomicInteger posts = new AtomicInteger(0);
+    	
+        final WebdavServlet servlet = new WebdavServlet() {
+            @Override
+            protected void doGet(HttpServletRequest request,
+                                 HttpServletResponse response)
+                throws IOException, ServletException {
+
+            	gets.incrementAndGet();
+                super.doGet(request, response);
+            }
+            
+            @Override
+            protected void doPost(HttpServletRequest request,
+                                 HttpServletResponse response)
+                throws IOException, ServletException {
+
+            	posts.incrementAndGet();
+                super.doPost(request, response);
+            }
+        };
+        
+        servlet.resources = new TesterWebResourceRoot() {
+
+			@Override
+			public WebResource getResource(String path) {
+				return new EmptyResource(null, null);
+			}
+        	
+        };
+        
+        final TestErrorRequest request = new TestErrorRequest();
+        request.setMethod("POST");
+        
+        final TesterResponse response = new TesterResponse();
+        
+        servlet.service(request, response);
+        
+        Assert.assertEquals(1,  gets.intValue());
+        Assert.assertEquals(0,  posts.intValue());
+    }
+    
+    private static class TestErrorRequest extends TesterRequest {
+		public TestErrorRequest() {
+			super();
+			internalDispatcherType = DispatcherType.ERROR;
+		}
+
+		public TestErrorRequest(boolean withSession) {
+			super(withSession);
+			internalDispatcherType = DispatcherType.ERROR;
+		}
+
+		@Override
+		public Object getAttribute(String name) {
+		    return null;
+		}
+
+		@Override
+		public String getPathInfo() {
+			return null;
+		}
+
+		@Override
+		public String getServletPath() {
+			return "/index.html";
+		}
+    };
 
 }

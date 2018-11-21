@@ -28,7 +28,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.servlet.DispatcherType;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import static org.junit.Assert.assertEquals;
@@ -42,10 +46,15 @@ import org.junit.Test;
 import static org.apache.catalina.startup.SimpleHttpClient.CRLF;
 
 import org.apache.catalina.Context;
+import org.apache.catalina.WebResource;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.startup.SimpleHttpClient;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
+import org.apache.catalina.webresources.EmptyResource;
+import org.apache.catalina.webresources.TesterWebResourceRoot;
+import org.apache.tomcat.unittest.TesterRequest;
+import org.apache.tomcat.unittest.TesterResponse;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.websocket.server.WsContextListener;
 
@@ -522,6 +531,52 @@ public class TestDefaultServlet extends TomcatBaseTest {
         assertTrue(client.isResponse404());
         assertEquals("It is 404.html", client.getResponseBody());
     }
+    
+    @Test
+    public void testCustomErrorServedThroughGet() throws Exception {
+    	
+    	final AtomicInteger gets = new AtomicInteger(0);
+    	final AtomicInteger posts = new AtomicInteger(0);
+    	
+        final DefaultServlet servlet = new DefaultServlet() {
+            @Override
+            protected void doGet(HttpServletRequest request,
+                                 HttpServletResponse response)
+                throws IOException, ServletException {
+
+            	gets.incrementAndGet();
+                super.doGet(request, response);
+            }
+            
+            @Override
+            protected void doPost(HttpServletRequest request,
+                                 HttpServletResponse response)
+                throws IOException, ServletException {
+
+            	posts.incrementAndGet();
+                super.doPost(request, response);
+            }
+        };
+        
+        servlet.resources = new TesterWebResourceRoot() {
+
+			@Override
+			public WebResource getResource(String path) {
+				return new EmptyResource(null, null);
+			}
+        	
+        };
+        
+        final TestErrorRequest request = new TestErrorRequest();
+        request.setMethod("POST");
+        
+        final TesterResponse response = new TesterResponse();
+        
+        servlet.service(request, response);
+        
+        Assert.assertEquals(1,  gets.intValue());
+        Assert.assertEquals(0,  posts.intValue());
+    }
 
     /*
      * Test what happens if a custom 404 page is configured,
@@ -622,4 +677,31 @@ public class TestDefaultServlet extends TomcatBaseTest {
             return true;
         }
     }
+    
+    private static class TestErrorRequest extends TesterRequest {
+		public TestErrorRequest() {
+			super();
+			internalDispatcherType = DispatcherType.ERROR;
+		}
+
+		public TestErrorRequest(boolean withSession) {
+			super(withSession);
+			internalDispatcherType = DispatcherType.ERROR;
+		}
+
+		@Override
+		public Object getAttribute(String name) {
+		    return null;
+		}
+
+		@Override
+		public String getPathInfo() {
+			return null;
+		}
+
+		@Override
+		public String getServletPath() {
+			return "/index.html";
+		}
+    };
 }
