@@ -31,10 +31,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Assert;
 import org.junit.Test;
-
+import org.apache.catalina.Authenticator;
 import org.apache.catalina.Context;
 import org.apache.catalina.core.StandardContext;
 import org.apache.tomcat.util.buf.ByteChunk;
+import org.apache.tomcat.util.descriptor.web.LoginConfig;
 
 public class TestContextConfig extends TomcatBaseTest {
 
@@ -200,6 +201,21 @@ public class TestContextConfig extends TomcatBaseTest {
             String result = res.toString();
             Assert.assertTrue(result, result.indexOf(expectedBody) > -1);
         }
+    }
+    
+    @Test
+    public void testCheckAuthenticator() throws Exception {
+    	Tomcat tomcat = getTomcatInstance();
+
+    	File appDir = new File("test/webapp-servletsecurity");
+        StandardContext ctxt = (StandardContext) tomcat.addContext(null,
+                "/test", appDir.getAbsolutePath());
+        ctxt.setDefaultWebXml(new File("conf/web.xml").getAbsolutePath());
+        ctxt.addLifecycleListener(new ContextConfig());
+        
+        tomcat.start();
+        
+        Assert.assertEquals(new LoginConfig("NONE", null, null, null), ctxt.getLoginConfig());
     }
 
 }
