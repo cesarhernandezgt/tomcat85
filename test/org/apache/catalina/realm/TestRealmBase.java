@@ -789,4 +789,96 @@ public class TestRealmBase {
         Assert.assertFalse(mapRealm.hasResourcePermission(
                 request, response, constraintsDelete, null));
     }
+    
+    
+    /*
+     * This test case covers the special case in section 13.4.1 of the Servlet
+     * 3.1 specification for {@link javax.servlet.annotation.HttpConstraint}.
+     */
+    @Test
+    public void testHttpConstraintMappedToROOT() throws IOException {
+
+        // Convert the annotation into constraints
+        ServletSecurityElement servletSecurityElement =
+                new ServletSecurityElement();
+        SecurityConstraint[] constraints =
+                SecurityConstraint.createConstraints(
+                        servletSecurityElement, "/*");
+
+        // Create a separate constraint that covers DELETE
+        SecurityConstraint deleteConstraint = new SecurityConstraint();
+        deleteConstraint.addAuthRole(ROLE1);
+        SecurityCollection deleteCollection = new SecurityCollection();
+        deleteCollection.addMethod("DELETE");
+        deleteCollection.addPattern("/*");
+        deleteConstraint.addCollection(deleteCollection);
+
+        TesterMapRealm mapRealm = new TesterMapRealm();
+
+        // Set up the mock request and response
+        TesterRequest request = new TesterRequest();
+        request.getRequestPathMB().setString("");
+        Response response = new TesterResponse();
+        Context context = request.getContext();
+        context.addSecurityRole(ROLE1);
+        context.addSecurityRole(ROLE2);
+        request.getMappingData().context = context;
+
+        // Create the principals
+        List<String> userRoles1 = new ArrayList<>();
+        userRoles1.add(ROLE1);
+        GenericPrincipal gp1 = new GenericPrincipal(USER1, PWD, userRoles1);
+
+        List<String> userRoles2 = new ArrayList<>();
+        userRoles2.add(ROLE2);
+        GenericPrincipal gp2 = new GenericPrincipal(USER2, PWD, userRoles2);
+
+        List<String> userRoles99 = new ArrayList<>();
+        GenericPrincipal gp99 = new GenericPrincipal(USER99, PWD, userRoles99);
+
+        // Add the constraints to the context
+        for (SecurityConstraint constraint : constraints) {
+            context.addConstraint(constraint);
+        }
+        context.addConstraint(deleteConstraint);
+
+        // All users should be able to perform a GET
+        request.setMethod("GET");
+
+        SecurityConstraint[] constraintsGet =
+                mapRealm.findSecurityConstraints(request, context);
+
+        request.setUserPrincipal(null);
+        Assert.assertTrue(mapRealm.hasResourcePermission(
+                request, response, constraintsGet, null));
+        request.setUserPrincipal(gp1);
+        Assert.assertTrue(mapRealm.hasResourcePermission(
+                request, response, constraintsGet, null));
+        request.setUserPrincipal(gp2);
+        Assert.assertTrue(mapRealm.hasResourcePermission(
+                request, response, constraintsGet, null));
+        request.setUserPrincipal(gp99);
+        Assert.assertTrue(mapRealm.hasResourcePermission(
+                request, response, constraintsGet, null));
+
+        // Only user1 should be able to perform a DELETE as only that user has
+        // role1.
+        request.setMethod("DELETE");
+
+        SecurityConstraint[] constraintsDelete =
+                mapRealm.findSecurityConstraints(request, context);
+
+        request.setUserPrincipal(null);
+        Assert.assertFalse(mapRealm.hasResourcePermission(
+                request, response, constraintsDelete, null));
+        request.setUserPrincipal(gp1);
+        Assert.assertTrue(mapRealm.hasResourcePermission(
+                request, response, constraintsDelete, null));
+        request.setUserPrincipal(gp2);
+        Assert.assertFalse(mapRealm.hasResourcePermission(
+                request, response, constraintsDelete, null));
+        request.setUserPrincipal(gp99);
+        Assert.assertFalse(mapRealm.hasResourcePermission(
+                request, response, constraintsDelete, null));
+    }
 }
