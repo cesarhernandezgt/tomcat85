@@ -256,6 +256,24 @@ public abstract class Http2TestBase extends TomcatBaseTest {
     }
 
 
+    protected void sendParameterPostRequest(int streamId, byte[] padding, String body,
+            long contentLength, boolean useExpectation) throws IOException {
+        byte[] headersFrameHeader = new byte[9];
+        ByteBuffer headersPayload = ByteBuffer.allocate(128);
+        byte[] dataFrameHeader = new byte[9];
+        ByteBuffer dataPayload = ByteBuffer.allocate(128);
+
+        buildPostRequest(headersFrameHeader, headersPayload, useExpectation,
+                "application/x-www-form-urlencoded", contentLength, "/parameter", dataFrameHeader,
+                dataPayload, padding, null, null, streamId);
+        writeFrame(headersFrameHeader, headersPayload);
+        if (body != null) {
+            dataPayload.put(body.getBytes(StandardCharsets.ISO_8859_1));
+            writeFrame(dataFrameHeader, dataPayload);
+        }
+    }
+
+
     protected void buildPostRequest(byte[] headersFrameHeader, ByteBuffer headersPayload,
             boolean useExpectation, byte[] dataFrameHeader, ByteBuffer dataPayload, byte[] padding,
             int streamId) {
@@ -986,6 +1004,24 @@ public abstract class Http2TestBase extends TomcatBaseTest {
                 data[1] = (byte) ((i >> 8) & 0xFF);
                 os.write(data);
             }
+        }
+    }
+
+
+    static class ParameterServlet extends HttpServlet {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+                throws ServletException, IOException {
+
+            Map<String,String[]> params = req.getParameterMap();
+
+            resp.setContentType("text/plain");
+            resp.setCharacterEncoding("UTF-8");
+
+            resp.getWriter().print(params.size());
         }
     }
 
