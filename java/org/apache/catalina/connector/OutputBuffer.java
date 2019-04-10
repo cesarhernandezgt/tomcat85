@@ -30,6 +30,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.catalina.Globals;
 import org.apache.coyote.ActionCode;
+import org.apache.coyote.CloseNowException;
 import org.apache.coyote.Response;
 import org.apache.tomcat.util.buf.B2CConverter;
 import org.apache.tomcat.util.buf.ByteChunk;
@@ -373,6 +374,13 @@ public class OutputBuffer extends Writer
             outputChunk.setBytes(buf, off, cnt);
             try {
                 coyoteResponse.doWrite(outputChunk);
+            } catch (CloseNowException e) {
+                // Catch this sub-class as it requires specific handling.
+                // Examples where this exception is thrown:
+                // - HTTP/2 stream timeout
+                // Prevent further output for this response
+                closed = true;
+                throw e;
             } catch (IOException e) {
                 // An IOException on a write is almost always due to
                 // the remote client aborting the request.  Wrap this

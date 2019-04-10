@@ -164,7 +164,21 @@ public class Stream extends AbstractStream implements HeaderEmitter {
             }
             try {
                 if (block) {
-                    wait();
+                    wait(handler.getProtocol().getStreamWriteTimeout());
+                    windowSize = getWindowSize();
+                    if (windowSize == 0) {
+                        String msg = sm.getString("stream.writeTimeout");
+                        StreamException se = new StreamException(
+                                msg, Http2Error.ENHANCE_YOUR_CALM, getIdAsInt());
+                        // Prevent the application making further writes
+                        streamOutputBuffer.closed = true;
+                        // Prevent Tomcat's error handling trying to write
+                        coyoteResponse.setError();
+                        coyoteResponse.setErrorReported();
+                        // Trigger a reset once control returns to Tomcat
+                        streamOutputBuffer.reset = se;
+                        throw new CloseNowException(msg, se);
+                    }
                 } else {
                     return 0;
                 }
@@ -174,7 +188,6 @@ public class Stream extends AbstractStream implements HeaderEmitter {
                 // Stream.
                 throw new IOException(e);
             }
-            windowSize = getWindowSize();
         }
         int allocation;
         if (windowSize < reservation) {
@@ -430,6 +443,9 @@ public class Stream extends AbstractStream implements HeaderEmitter {
         return true;
     }
 
+    StreamException getResetException() {
+        return streamOutputBuffer.reset;
+    }
 
     private static void push(final Http2UpgradeHandler handler, final Request request, final Stream stream)
             throws IOException {
@@ -462,6 +478,7 @@ public class Stream extends AbstractStream implements HeaderEmitter {
         private final ByteBuffer buffer = ByteBuffer.allocate(8 * 1024);
         private volatile long written = 0;
         private volatile boolean closed = false;
+        private volatile StreamException reset = null;
         private volatile boolean endOfStreamSent = false;
         private volatile boolean writeInterest = false;
 
@@ -570,8 +587,13 @@ public class Stream extends AbstractStream implements HeaderEmitter {
         }
 
         public void close() throws IOException {
-            closed = true;
-            flushData();
+            if (reset != null) {
+                throw new CloseNowException(reset);
+            }
+            if (!closed) {
+                closed = true;
+                flush(true);
+            }
         }
 
         public boolean isClosed() {

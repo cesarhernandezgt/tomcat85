@@ -72,10 +72,13 @@ public class StreamProcessor extends AbstractProcessor implements Runnable {
                             stream.getIdentifier()), Http2Error.INTERNAL_ERROR);
                     stream.close(ce);
                 } else if (!getErrorState().isIoAllowed()) {
-                    StreamException se = new StreamException(sm.getString(
+                    StreamException se = stream.getResetException();
+                    if (se == null) {
+                        se = new StreamException(sm.getString(
                             "streamProcessor.error.stream", stream.getConnectionId(),
                             stream.getIdentifier()), Http2Error.INTERNAL_ERROR,
-                            stream.getIdentifier().intValue());
+                            stream.getIdAsInt());
+                    }
                     stream.close(se);
                 }
             }
