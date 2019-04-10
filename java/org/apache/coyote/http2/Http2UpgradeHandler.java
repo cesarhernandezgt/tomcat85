@@ -32,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.servlet.http.WebConnection;
@@ -141,6 +142,7 @@ public class Http2UpgradeHandler extends AbstractStream implements InternalHttpU
     private final ConcurrentMap<AbstractStream,int[]> backLogStreams = new ConcurrentHashMap<>();
     private long backLogSize = 0;
 
+    private final AtomicLong overheadCount = new AtomicLong(-10);
 
     public Http2UpgradeHandler(Adapter adapter, Request coyoteRequest) {
         this(null, adapter, coyoteRequest);
@@ -307,6 +309,10 @@ public class Http2UpgradeHandler extends AbstractStream implements InternalHttpU
                                 stream.close(se);
                             }
                         }
+                    }
+
+                    if (overheadCount.get() > 0) {
+                        throw new ConnectionException("Too much overhead", Http2Error.ENHANCE_YOUR_CALM);
                     }
 
                     if (activeRemoteStreamCount.get() == 0) {
@@ -595,6 +601,9 @@ public class Http2UpgradeHandler extends AbstractStream implements InternalHttpU
             log.debug(sm.getString("upgradeHandler.writeBody", connectionId, stream.getIdentifier(),
                     Integer.toString(len)));
         }
+
+        reduceOverheadCount();
+
         byte[] header = new byte[9];
         ByteUtil.setThreeBytes(header, 0, len);
         header[3] = FrameType.DATA.getIdByte();
@@ -1037,6 +1046,16 @@ public class Http2UpgradeHandler extends AbstractStream implements InternalHttpU
     }
 
 
+    private void reduceOverheadCount() {
+        overheadCount.decrementAndGet();
+    }
+
+
+    private void increaseOverheadCount() {
+        overheadCount.addAndGet(getProtocol().getOverheadCountFactor());
+    }
+
+
     // ------------------------------------------- Configuration getters/setters
 
     public long getReadTimeout() {
@@ -1147,6 +1166,7 @@ public class Http2UpgradeHandler extends AbstractStream implements InternalHttpU
 
     @Override
     public ByteBuffer startRequestBodyFrame(int streamId, int payloadSize) throws Http2Exception {
+        reduceOverheadCount();
         Stream stream = getStream(streamId, true);
         stream.checkState(FrameType.DATA);
         return stream.getInputByteBuffer();
@@ -1184,6 +1204,8 @@ public class Http2UpgradeHandler extends AbstractStream implements InternalHttpU
 
     @Override
     public HeaderEmitter headersStart(int streamId) throws Http2Exception {
+        reduceOverheadCount();
+
         if (connectionState.get().isNewStreamAllowed()) {
             Stream stream = getStream(streamId, false);
             if (stream == null) {
@@ -1224,6 +1246,9 @@ public class Http2UpgradeHandler extends AbstractStream implements InternalHttpU
     @Override
     public void reprioritise(int streamId, int parentStreamId,
             boolean exclusive, int weight) throws Http2Exception {
+
+        increaseOverheadCount();
+
         Stream stream = getStream(streamId, false);
         if (stream == null) {
             stream = createRemoteStream(streamId);
@@ -1267,6 +1292,9 @@ public class Http2UpgradeHandler extends AbstractStream implements InternalHttpU
 
     @Override
     public void setting(Setting setting, long value) throws ConnectionException {
+
+        increaseOverheadCount();
+
         // Special handling required
         if (setting == Setting.INITIAL_WINDOW_SIZE) {
             long oldValue = remoteSettings.getInitialWindowSize();
@@ -1308,6 +1336,9 @@ public class Http2UpgradeHandler extends AbstractStream implements InternalHttpU
 
     @Override
     public void pingReceive(byte[] payload, boolean ack) throws IOException {
+        if (!ack) {
+            increaseOverheadCount();
+        }
         pingManager.receivePing(payload, ack);
     }
 

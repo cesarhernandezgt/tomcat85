@@ -25,6 +25,7 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.net.SocketFactory;
 import javax.servlet.ServletException;
@@ -258,19 +259,19 @@ public abstract class Http2TestBase extends TomcatBaseTest {
 
     protected void sendParameterPostRequest(int streamId, byte[] padding, String body,
             long contentLength, boolean useExpectation) throws IOException {
-        byte[] headersFrameHeader = new byte[9];
-        ByteBuffer headersPayload = ByteBuffer.allocate(128);
-        byte[] dataFrameHeader = new byte[9];
-        ByteBuffer dataPayload = ByteBuffer.allocate(128);
-
-        buildPostRequest(headersFrameHeader, headersPayload, useExpectation,
-                "application/x-www-form-urlencoded", contentLength, "/parameter", dataFrameHeader,
-                dataPayload, padding, null, null, streamId);
-        writeFrame(headersFrameHeader, headersPayload);
-        if (body != null) {
-            dataPayload.put(body.getBytes(StandardCharsets.ISO_8859_1));
-            writeFrame(dataFrameHeader, dataPayload);
-        }
+//        byte[] headersFrameHeader = new byte[9];
+//        ByteBuffer headersPayload = ByteBuffer.allocate(128);
+//        byte[] dataFrameHeader = new byte[9];
+//        ByteBuffer dataPayload = ByteBuffer.allocate(128);
+//
+//        buildPostRequest(headersFrameHeader, headersPayload, useExpectation,
+//                "application/x-www-form-urlencoded", contentLength, "/parameter", dataFrameHeader,
+//                dataPayload, padding, null, null, streamId);
+//        writeFrame(headersFrameHeader, headersPayload);
+//        if (body != null) {
+//            dataPayload.put(body.getBytes(StandardCharsets.ISO_8859_1));
+//            writeFrame(dataFrameHeader, dataPayload);
+//        }
     }
 
 
