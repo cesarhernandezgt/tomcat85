@@ -25,6 +25,7 @@ import java.security.PrivilegedExceptionAction;
 import java.util.Iterator;
 
 import org.apache.coyote.ActionCode;
+import org.apache.coyote.CloseNowException;
 import org.apache.coyote.InputBuffer;
 import org.apache.coyote.OutputBuffer;
 import org.apache.coyote.Request;
@@ -169,7 +170,7 @@ public class Stream extends AbstractStream implements HeaderEmitter {
                     if (windowSize == 0) {
                         String msg = sm.getString("stream.writeTimeout");
                         StreamException se = new StreamException(
-                                msg, Http2Error.ENHANCE_YOUR_CALM, getIdAsInt());
+                                msg, Http2Error.ENHANCE_YOUR_CALM, getIdentifier().intValue());
                         // Prevent the application making further writes
                         streamOutputBuffer.closed = true;
                         // Prevent Tomcat's error handling trying to write
