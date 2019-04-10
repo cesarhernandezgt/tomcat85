@@ -30,6 +30,7 @@ import org.apache.coyote.InputBuffer;
 import org.apache.coyote.OutputBuffer;
 import org.apache.coyote.Request;
 import org.apache.coyote.Response;
+import org.apache.coyote.http11.OutputFilter;
 import org.apache.coyote.http2.HpackDecoder.HeaderEmitter;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
@@ -172,12 +173,12 @@ public class Stream extends AbstractStream implements HeaderEmitter {
                         StreamException se = new StreamException(
                                 msg, Http2Error.ENHANCE_YOUR_CALM, getIdentifier().intValue());
                         // Prevent the application making further writes
-                        streamOutputBuffer.closed = true;
+                        outputBuffer.closed = true;
                         // Prevent Tomcat's error handling trying to write
                         coyoteResponse.setError();
                         coyoteResponse.setErrorReported();
                         // Trigger a reset once control returns to Tomcat
-                        streamOutputBuffer.reset = se;
+                        outputBuffer.reset = se;
                         throw new CloseNowException(msg, se);
                     }
                 } else {
@@ -278,6 +279,7 @@ public class Stream extends AbstractStream implements HeaderEmitter {
         // TODO: Is 1k the optimal value?
         handler.writeHeaders(this, coyoteResponse, 1024);
     }
+
 
     void writeAck() throws IOException {
         // TODO: Is 64 too big? Just the status header with compression
@@ -445,7 +447,7 @@ public class Stream extends AbstractStream implements HeaderEmitter {
     }
 
     StreamException getResetException() {
-        return streamOutputBuffer.reset;
+        return outputBuffer.reset;
     }
 
     private static void push(final Http2UpgradeHandler handler, final Request request, final Stream stream)
