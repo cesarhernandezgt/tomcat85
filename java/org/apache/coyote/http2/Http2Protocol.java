@@ -31,8 +31,10 @@ import org.apache.tomcat.util.net.SocketWrapperBase;
 public class Http2Protocol implements UpgradeProtocol {
 
     static final long DEFAULT_READ_TIMEOUT = 10000;
-    static final long DEFAULT_KEEP_ALIVE_TIMEOUT = -1;
     static final long DEFAULT_WRITE_TIMEOUT = 10000;
+    static final long DEFAULT_KEEP_ALIVE_TIMEOUT = -1;
+    static final long DEFAULT_STREAM_READ_TIMEOUT = 20000;
+    static final long DEFAULT_STREAM_WRITE_TIMEOUT = 20000;
     // The HTTP/2 specification recommends a minimum default of 100
     static final long DEFAULT_MAX_CONCURRENT_STREAMS = 200;
     // This default is defined by the HTTP/2 specification
@@ -43,9 +45,14 @@ public class Http2Protocol implements UpgradeProtocol {
     private static final byte[] ALPN_IDENTIFIER = ALPN_NAME.getBytes(StandardCharsets.UTF_8);
 
     // All timeouts in milliseconds
+    // These are the socket level timeouts
     private long readTimeout = DEFAULT_READ_TIMEOUT;
-    private long keepAliveTimeout = DEFAULT_KEEP_ALIVE_TIMEOUT;
     private long writeTimeout = DEFAULT_WRITE_TIMEOUT;
+    private long keepAliveTimeout = DEFAULT_KEEP_ALIVE_TIMEOUT;
+    // These are the stream level timeouts
+    private long streamReadTimeout = DEFAULT_STREAM_READ_TIMEOUT;
+    private long streamWriteTimeout = DEFAULT_STREAM_WRITE_TIMEOUT;
+
     private long maxConcurrentStreams = DEFAULT_MAX_CONCURRENT_STREAMS;
     // If a lower initial value is required, set it here but DO NOT change the
     // default defined above.
@@ -125,6 +132,16 @@ public class Http2Protocol implements UpgradeProtocol {
     }
 
 
+    public long getWriteTimeout() {
+        return writeTimeout;
+    }
+
+
+    public void setWriteTimeout(long writeTimeout) {
+        this.writeTimeout = writeTimeout;
+    }
+
+
     public long getKeepAliveTimeout() {
         return keepAliveTimeout;
     }
@@ -135,13 +152,23 @@ public class Http2Protocol implements UpgradeProtocol {
     }
 
 
-    public long getWriteTimeout() {
-        return writeTimeout;
+    public long getStreamReadTimeout() {
+        return streamReadTimeout;
     }
 
 
-    public void setWriteTimeout(long writeTimeout) {
-        this.writeTimeout = writeTimeout;
+    public void setStreamReadTimeout(long streamReadTimeout) {
+        this.streamReadTimeout = streamReadTimeout;
+    }
+
+
+    public long getStreamWriteTimeout() {
+        return streamWriteTimeout;
+    }
+
+
+    public void setStreamWriteTimeout(long streamWriteTimeout) {
+        this.streamWriteTimeout = streamWriteTimeout;
     }
 
 
