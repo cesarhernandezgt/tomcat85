@@ -44,13 +44,16 @@ public class StreamProcessor extends AbstractProcessor implements Runnable {
     private static final Log log = LogFactory.getLog(StreamProcessor.class);
     private static final StringManager sm = StringManager.getManager(StreamProcessor.class);
 
+    private final Http2UpgradeHandler handler;
     private final Stream stream;
 
     private volatile SSLSupport sslSupport;
 
 
-    public StreamProcessor(Stream stream, Adapter adapter, SocketWrapperBase<?> socketWrapper) {
+    StreamProcessor(Http2UpgradeHandler handler, Stream stream, Adapter adapter,
+            SocketWrapperBase<?> socketWrapper) {
         super(stream.getCoyoteRequest(), stream.getCoyoteResponse());
+        this.handler = handler;
         this.stream = stream;
         setAdapter(adapter);
         setSocketWrapper(socketWrapper);
@@ -412,6 +415,13 @@ public class StreamProcessor extends AbstractProcessor implements Runnable {
             }
             setErrorState(ErrorState.CLOSE_NOW, e);
         }
+        
+        if (!isAsync()) {
+            // If this is an async request then the request ends when it has
+            // been completed. The AsyncContext is responsible for calling
+            // endRequest() in that case.
+            endRequest();
+        }
 
         if (getErrorState().isError()) {
             action(ActionCode.CLOSE, null);
@@ -448,8 +458,23 @@ public class StreamProcessor extends AbstractProcessor implements Runnable {
 
 
     @Override
-    protected SocketState dispatchEndRequest() {
+    protected SocketState dispatchEndRequest() throws IOException {
+        endRequest();
         return SocketState.CLOSED;
+    }
+	
+	private void endRequest() throws IOException {
+        if (!stream.isInputFinished() && getErrorState().isIoAllowed()) {
+            // The request has been processed but the request body has not been
+            // fully read. This typically occurs when Tomcat rejects an upload
+            // of some form (e.g. PUT or POST). Need to tell the client not to
+            // send any more data but only if a reset has not already been
+            // triggered.
+            StreamException se = new StreamException(
+                    sm.getString("streamProcessor.cancel", stream.getConnectionId(),
+                            stream.getIdentifier()), Http2Error.CANCEL, stream.getIdentifier().intValue());
+            handler.sendStreamReset(se);
+        }
     }
 
 

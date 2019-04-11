@@ -251,7 +251,7 @@ public class Http2UpgradeHandler extends AbstractStream implements InternalHttpU
 
         if (webConnection != null) {
             // Process the initial request on a container thread
-            StreamProcessor streamProcessor = new StreamProcessor(stream, adapter, socketWrapper);
+            StreamProcessor streamProcessor = new StreamProcessor(this, stream, adapter, socketWrapper);
             streamProcessor.setSslSupport(sslSupport);
             socketWrapper.getEndpoint().getExecutor().execute(streamProcessor);
         }
@@ -1025,7 +1025,7 @@ public class Http2UpgradeHandler extends AbstractStream implements InternalHttpU
         pushStream.sentPushPromise();
 
         // Process this stream on a container thread
-        StreamProcessor streamProcessor = new StreamProcessor(pushStream, adapter, socketWrapper);
+        StreamProcessor streamProcessor = new StreamProcessor(this, pushStream, adapter, socketWrapper);
         streamProcessor.setSslSupport(sslSupport);
         socketWrapper.getEndpoint().getExecutor().execute(streamProcessor);
     }
@@ -1270,7 +1270,7 @@ public class Http2UpgradeHandler extends AbstractStream implements InternalHttpU
         Stream stream = getStream(streamId, connectionState.get().isNewStreamAllowed());
         if (stream != null) {
             // Process this stream on a container thread
-            StreamProcessor streamProcessor = new StreamProcessor(stream, adapter, socketWrapper);
+            StreamProcessor streamProcessor = new StreamProcessor(this, stream, adapter, socketWrapper);
             streamProcessor.setSslSupport(sslSupport);
             socketWrapper.getEndpoint().getExecutor().execute(streamProcessor);
         }
