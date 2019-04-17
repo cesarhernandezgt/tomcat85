@@ -24,6 +24,7 @@ import org.apache.coyote.AbstractProcessor;
 import org.apache.coyote.ActionCode;
 import org.apache.coyote.Adapter;
 import org.apache.coyote.AsyncContextCallback;
+import org.apache.coyote.CloseNowException;
 import org.apache.coyote.ContainerThreadMarker;
 import org.apache.coyote.ErrorState;
 import org.apache.coyote.PushToken;
@@ -114,11 +115,13 @@ public class StreamProcessor extends AbstractProcessor implements Runnable {
             break;
         }
         case CLOSE: {
-            action(ActionCode.COMMIT, null);
+        	action(ActionCode.COMMIT, null);
             try {
-                stream.getOutputBuffer().close();
-            } catch (IOException ioe) {
-                setErrorState(ErrorState.CLOSE_CONNECTION_NOW, ioe);
+            	stream.getOutputBuffer().close();
+            } catch (CloseNowException cne) {
+                setErrorState(ErrorState.CLOSE_NOW, cne);
+            } catch (IOException e) {
+                setErrorState(ErrorState.CLOSE_CONNECTION_NOW, e);
             }
             break;
         }

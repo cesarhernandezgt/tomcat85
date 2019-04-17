@@ -400,10 +400,14 @@ public class Stream extends AbstractStream implements HeaderEmitter {
 
 
     void close(Http2Exception http2Exception) {
-        if (http2Exception instanceof StreamException) {
+    	if (http2Exception instanceof StreamException) {
             try {
                 StreamException se = (StreamException) http2Exception;
-                receiveReset(se.getError().getCode());
+                if (log.isDebugEnabled()) {
+                    log.debug(sm.getString("stream.reset.send", getConnectionId(), getIdentifier(),
+                            se.getError()));
+                }
+                state.sendReset();
                 handler.sendStreamReset(se);
             } catch (IOException ioe) {
                 ConnectionException ce = new ConnectionException(
