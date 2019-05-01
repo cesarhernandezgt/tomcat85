@@ -152,6 +152,27 @@
         When generating a redirect to a directory in the Default Servlet, avoid
         generating a protocol relative redirect. (markt)
       </fix>
+      <add>
+        <bug>61489</bug>: When using the CGI servlet, make the generation of
+        command line arguments from the query string (as per section 4.4 of RFC
+        3875) optional. The feature is enabled by default for consistency with
+        previous releases. Based on a patch by jm009. (markt)
+      </add>
+      <add>
+        When the CGI Servlet is configured with
+        <code>enableCmdLineArguments</code> set to true, limit the encoded form
+        of the individual command line arguments to those values allowed by RFC
+        3875. This restriction may be relaxed by the use of the new
+        initialisation parameter <code>cmdLineArgumentsEncoded</code>. (markt)
+      </add>
+      <add>
+        When the CGI Servlet is configured with
+        <code>enableCmdLineArguments</code> set to true, limit the decoded form
+        of the individual command line arguments to known safe values when
+        running on Windows. This restriction may be relaxed by the use of the
+        new initialisation parameter <code>cmdLineArgumentsDecoded</code>. This
+        is the fix for CVE-2019-0232. (markt)
+      </add>
     </changelog>
   </subsection>
   <subsection name="Coyote">
