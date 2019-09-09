@@ -328,6 +328,8 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
      *
      * @return The state to return for the socket once the clean-up for the
      *         current request has completed
+     * @throws IOException If an I/O error occurs while attempting to end the
+     *         request
      */
     protected abstract SocketState dispatchEndRequest() throws IOException;
 }

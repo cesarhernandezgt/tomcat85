@@ -146,6 +146,8 @@ public abstract class AbstractProcessorLight implements Processor {
      * HTTP requests.
      * @param status The event to process
      * @return the socket state
+     * @throws IOException If an I/O error occurs during the processing of the
+     *         reques
      */
     protected abstract SocketState dispatch(SocketEvent status) throws IOException;
 
