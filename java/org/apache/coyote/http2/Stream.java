@@ -174,17 +174,7 @@ public class Stream extends AbstractStream implements HeaderEmitter {
                     }
                     windowSize = getWindowSize();
                     if (windowSize == 0) {
-                        String msg = sm.getString("stream.writeTimeout");
-                        StreamException se = new StreamException(
-                                msg, Http2Error.ENHANCE_YOUR_CALM, getIdentifier().intValue());
-                        // Prevent the application making further writes
-                        outputBuffer.closed = true;
-                        // Prevent Tomcat's error handling trying to write
-                        coyoteResponse.setError();
-                        coyoteResponse.setErrorReported();
-                        // Trigger a reset once control returns to Tomcat
-                        outputBuffer.reset = se;
-                        throw new CloseNowException(msg, se);
+                        doWriteTimeout();
                     }
                 } else {
                     return 0;
@@ -304,6 +294,21 @@ public class Stream extends AbstractStream implements HeaderEmitter {
     @Override
     protected final String getConnectionId() {
         return getParentStream().getConnectionId();
+    }
+
+
+    void doWriteTimeout() throws CloseNowException {
+        String msg = sm.getString("stream.writeTimeout");
+        StreamException se = new StreamException(
+                msg, Http2Error.ENHANCE_YOUR_CALM, getIdentifier().intValue());
+        // Prevent the application making further writes
+        outputBuffer.closed = true;
+        // Prevent Tomcat's error handling trying to write
+        coyoteResponse.setError();
+        coyoteResponse.setErrorReported();
+        // Trigger a reset once control returns to Tomcat
+        outputBuffer.reset = se;
+        throw new CloseNowException(msg, se);
     }
 
 

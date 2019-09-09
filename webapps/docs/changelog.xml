@@ -178,6 +178,10 @@
   <subsection name="Coyote">
     <changelog>
       <fix>
+        Expand HTTP/2 timeout handling to include connection window exhaustion
+        on write. (markt)
+      </fix>
+      <fix>
         Ensure that requests with HTTP method names that are not tokens (as
         required by RFC 7231) are rejected with a 400 response. (markt)
       </fix>
