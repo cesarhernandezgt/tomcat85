@@ -23,19 +23,20 @@
 # Note: You will be prompted for your GPG passphrase and LDAP password when
 #        running this script
 asf.ldap.username=<!-- YOUR APACHE LDAP USERNAME -->
-gpg.exec=C:/software/GNU/GnuPG/gpg.exe
+#gpg.exec=C:/software/GNU/GnuPG/gpg.exe
+gpg.exec=gpg
 
 # ASF Snapshot Repository (hosted on Nexus)
-maven.snapshot.repo.url=https://repository.apache.org/content/repositories/snapshots
-maven.snapshot.repo.repositoryId=apache.snapshots
+maven.snapshot.repo.url=https://repository.tomitribe.com/content/repositories/snapshots-tomitribe
+maven.snapshot.repo.repositoryId=tomitribe.snapshots.https
 
 # ASF Release Repository (hosted on Nexus)
 # Note: Also used for staging releases prior to voting
-maven.asf.release.repo.url=https://repository.apache.org/service/local/staging/deploy/maven2
-maven.asf.release.repo.repositoryId=apache.releases
+maven.asf.release.repo.url=https://repository.tomitribe.com/service/local/staging/deploy/maven2
+maven.asf.release.repo.repositoryId=tomitribe.releases.https
 
 # Release version info
-maven.asf.release.deploy.version=8.5.3
+maven.asf.release.deploy.version=8.5.3-TT.2
 
 #Where do we load the libraries from
 tomcat.lib.path=../../output/build/lib
