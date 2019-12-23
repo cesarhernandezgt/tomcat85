@@ -133,10 +133,6 @@ public class FormAuthenticator
     public boolean authenticate(Request request, HttpServletResponse response)
             throws IOException {
 
-        if (checkForCachedAuthentication(request, response, true)) {
-            return true;
-        }
-
         // References to objects we will need later
         Session session = null;
         Principal principal = null;
@@ -158,11 +154,8 @@ public class FormAuthenticator
                 principal =
                     context.getRealm().authenticate(username, password);
                 if (principal != null) {
-                    session.setNote(Constants.FORM_PRINCIPAL_NOTE, principal);
+                	register(request, response, principal, HttpServletRequest.FORM_AUTH, username, password);
                     if (!matchRequest(request)) {
-                        register(request, response, principal,
-                                HttpServletRequest.FORM_AUTH,
-                                username, password);
                         return true;
                     }
                 }
@@ -181,17 +174,6 @@ public class FormAuthenticator
                           + session.getIdInternal()
                           + "'");
             }
-            principal = (Principal)
-                session.getNote(Constants.FORM_PRINCIPAL_NOTE);
-            register(request, response, principal, HttpServletRequest.FORM_AUTH,
-                     (String) session.getNote(Constants.SESS_USERNAME_NOTE),
-                     (String) session.getNote(Constants.SESS_PASSWORD_NOTE));
-            // If we're caching principals we no longer need the username
-            // and password in the session, so remove them
-            if (cache) {
-                session.removeNote(Constants.SESS_USERNAME_NOTE);
-                session.removeNote(Constants.SESS_PASSWORD_NOTE);
-            }
             if (restoreRequest(request, session)) {
                 if (log.isDebugEnabled()) {
                     log.debug("Proceed to restored request");
@@ -204,6 +186,12 @@ public class FormAuthenticator
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST);
                 return false;
             }
+        }
+        
+        // This check has to be after the previous check for a matching request
+        // because that matching request may also include a cached Principal.
+        if (checkForCachedAuthentication(request, response, true)) {
+            return true;
         }
 
         // Acquire references to objects we will need to evaluate
@@ -297,12 +285,7 @@ public class FormAuthenticator
             return false;
         }
 
-        // Save the authenticated Principal in our session
-        session.setNote(Constants.FORM_PRINCIPAL_NOTE, principal);
-
-        // Save the username and password as well
-        session.setNote(Constants.SESS_USERNAME_NOTE, username);
-        session.setNote(Constants.SESS_PASSWORD_NOTE, password);
+        register(request, response, principal, HttpServletRequest.FORM_AUTH, username, password);
 
         // Redirect the user to the original request URI (which will cause
         // the original request to be restored)
@@ -482,7 +465,7 @@ public class FormAuthenticator
         }
 
         // Is there a saved principal?
-        if (session.getNote(Constants.FORM_PRINCIPAL_NOTE) == null) {
+        if (cache && session.getPrincipal() == null || !cache && request.getPrincipal() == null) {
             return false;
         }
 
@@ -513,7 +496,6 @@ public class FormAuthenticator
         SavedRequest saved = (SavedRequest)
             session.getNote(Constants.FORM_REQUEST_NOTE);
         session.removeNote(Constants.FORM_REQUEST_NOTE);
-        session.removeNote(Constants.FORM_PRINCIPAL_NOTE);
         if (saved == null) {
             return false;
         }
