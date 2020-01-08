@@ -636,17 +636,29 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
             Map<String, List<String>> resHead) throws IOException {
         return methodUrl(path, out, readTimeout, reqHead, resHead, "GET");
     }
+    
+    public static int getUrl(String path, ByteChunk out, boolean followRedirects)
+            throws IOException {
+        return methodUrl(path, out, 1000000, null, null, "GET", followRedirects);
+    }
+    
 
     public static int methodUrl(String path, ByteChunk out, int readTimeout,
-            Map<String, List<String>> reqHead,
-            Map<String, List<String>> resHead,
-            String method) throws IOException {
+            Map<String, List<String>> reqHead, Map<String, List<String>> resHead, String method)
+            throws IOException {
+        return methodUrl(path, out, readTimeout, reqHead, resHead, method, true);
+    }
+
+    public static int methodUrl(String path, ByteChunk out, int readTimeout,
+                Map<String, List<String>> reqHead, Map<String, List<String>> resHead, String method,
+                boolean followRedirects) throws IOException {
 
         URL url = new URL(path);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setUseCaches(false);
         connection.setReadTimeout(readTimeout);
         connection.setRequestMethod(method);
+        connection.setInstanceFollowRedirects(followRedirects);
         if (reqHead != null) {
             for (Map.Entry<String, List<String>> entry : reqHead.entrySet()) {
                 StringBuilder valueList = new StringBuilder();
@@ -663,8 +675,13 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
         connection.connect();
         int rc = connection.getResponseCode();
         if (resHead != null) {
-            Map<String, List<String>> head = connection.getHeaderFields();
-            resHead.putAll(head);
+            // Skip the entry with null key that is used for the response line
+            // that some Map implementations may not accept.
+            for (Map.Entry<String, List<String>> entry : connection.getHeaderFields().entrySet()) {
+                if (entry.getKey() != null) {
+                    resHead.put(entry.getKey(), entry.getValue());
+                }
+            }
         }
         InputStream is;
         if (rc < 400) {
