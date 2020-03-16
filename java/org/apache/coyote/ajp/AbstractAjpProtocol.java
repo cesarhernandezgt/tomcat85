@@ -193,7 +193,7 @@ public abstract class AbstractAjpProtocol<S> extends AbstractProtocol<S> {
         processor.setAjpFlush(getAjpFlush());
         processor.setTomcatAuthentication(getTomcatAuthentication());
         processor.setTomcatAuthorization(getTomcatAuthorization());
-        processor.setRequiredSecret(requiredSecret);
+        processor.setSecret(secret);
         processor.setKeepAliveTimeout(getKeepAliveTimeout());
         processor.setClientCertProvider(getClientCertProvider());
         return processor;
@@ -205,5 +205,17 @@ public abstract class AbstractAjpProtocol<S> extends AbstractProtocol<S> {
             UpgradeToken upgradeToken) {
         throw new IllegalStateException(sm.getString("ajpprotocol.noUpgradeHandler",
                 upgradeToken.getHttpUpgradeHandler().getClass().getName()));
+    }
+
+
+    @Override
+    public void init() throws Exception {
+        if (getSecretRequired()) {
+            String secret = getSecret();
+            if (secret == null || secret.length() == 0) {
+                throw new IllegalArgumentException(sm.getString("ajpprotocol.nosecret"));
+            }
+        }
+        super.init();
     }
 }
