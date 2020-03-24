@@ -285,7 +285,7 @@ public class TestMapperWebapps extends TomcatBaseTest{
 
     private void doRedirectTest(String path, int expected) throws IOException {
         ByteChunk bc = new ByteChunk();
-        int rc = getUrl("http://localhost:" + getPort() + path, bc, null);
+        int rc = getUrl("http://localhost:" + getPort() + path, bc, false);
         Assert.assertEquals(expected, rc);
     }
 
