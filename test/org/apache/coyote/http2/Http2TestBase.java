@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
@@ -46,6 +47,7 @@ import org.apache.coyote.http2.Http2Parser.Input;
 import org.apache.coyote.http2.Http2Parser.Output;
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.apache.tomcat.util.http.MimeHeaders;
+import org.junit.Assume;
 
 /**
  * Tests for compliance with the <a href="https://tools.ietf.org/html/rfc7540">
@@ -766,6 +768,42 @@ public abstract class Http2TestBase extends TomcatBaseTest {
 
         os.write(settingFrame);
         os.flush();
+    }
+
+
+    void handleGoAwayResponse(int lastStream) throws Http2Exception, IOException {
+        handleGoAwayResponse(lastStream, Http2Error.PROTOCOL_ERROR);
+    }
+
+
+    protected void skipWindowSizeFrames() throws Http2Exception, IOException {
+        do {
+            output.clearTrace();
+            parser.readFrame(true);
+        } while (output.getTrace().contains("WindowSize"));
+    }
+
+
+    void handleGoAwayResponse(int lastStream, Http2Error expectedError)
+            throws Http2Exception, IOException {
+        try {
+            parser.readFrame(true);
+
+            Assert.assertTrue(output.getTrace(), output.getTrace().startsWith(
+                    "0-Goaway-[" + lastStream + "]-[" + expectedError.getCode() + "]-["));
+        } catch (SocketException se) {
+            // On some platform / Connector combinations (e.g. Windows / NIO2),
+            // the TCP connection close will be processed before the client gets
+            // a chance to read the connection close frame.
+            Tomcat tomcat = getTomcatInstance();
+            Connector connector = tomcat.getConnector();
+
+            Assume.assumeTrue("This test is only expected to trigger an exception with NIO2",
+                              connector.getProtocolHandlerClassName().contains("Nio2"));
+
+            Assume.assumeTrue("This test is only expected to trigger an exception on Windows",
+                    System.getProperty("os.name").startsWith("Windows"));
+        }
     }
 
 
